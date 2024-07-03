@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Folders = require("../models/Folders");
-const { query, body, validationResult } = require("express-validator");
+const { query, body, validationResult, param } = require("express-validator");
 const Items = require("../models/Items");
 
 //Create a Folder
@@ -82,5 +82,36 @@ router.put(
       }
     }
   );
+
+
+  //Delete Folder
+  // Delete a Folder
+router.delete(
+  "/deletefolder/:folderId",
+  param("folderId", "Invalid folder ID").isMongoId(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { folderId } = req.params;
+
+    try {
+      const deletedFolder = await Folders.findByIdAndDelete(folderId);
+
+      if (!deletedFolder) {
+        console.log(`Folder with ID ${folderId} not found`);
+        return res.status(404).json({ message: "Folder not found" });
+      }
+
+      res.json({ message: "Folder deleted successfully" });
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("Some error occurred");
+    }
+  }
+);
+
 
 module.exports = router;
